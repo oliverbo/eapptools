@@ -5,7 +5,7 @@ import json
 
 from google.appengine.api import users
 import jinja2
-import apptools
+import eapptools
 
 AUTH_NONE = 0
 AUTH_USER = 1
@@ -23,7 +23,7 @@ def static_page(request_handler, page_name, page_dir = 'html', auth_mode = AUTH_
     user = users.get_current_user()
     
     logger.info("auth_mode: %d", auth_mode)
-    logger.debug("Root Dir %s", apptools.web_root)
+    logger.debug("Root Dir %s", eapptools.web_root)
     if user:
     	logger.info('authenticated user: %s', user.nickname())
     	logger.info('user is admin: %s', users.is_current_user_admin())
@@ -34,7 +34,7 @@ def static_page(request_handler, page_name, page_dir = 'html', auth_mode = AUTH_
         if not users.is_current_user_admin() and auth_mode == AUTH_ADMIN:
 			request_handler.response.status = '401 Not Authorized'
 			return
-        template = JINJA_ENVIRONMENT.get_template(apptools.web_root + '/' + page_name)
+        template = JINJA_ENVIRONMENT.get_template(eapptools.web_root + '/' + page_name)
         
         # compose page info
         page_info = {
