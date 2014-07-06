@@ -62,11 +62,14 @@ class ModelBase(ndb.Model):
 		
 	def to_json(self):
 		"""Converts the entity to JSON"""
-		return json.dumps(self, default = lambda o: o.to_dict())
+		return to_json(self)
 	
 	def validate(self):
 		"""Validates a data object and results in a ValidationError is the data is invalid"""
 		pass
 			
+def to_json(obj):  
+	"""Generic JSON converter that handles also arrays of NDB entities"""  
+	return json.dumps(obj, default = lambda o: o.to_dict())
 
 	
