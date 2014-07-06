@@ -1,5 +1,6 @@
 import logging
 import musicdb
+import json
 from google.appengine.ext import ndb
 
 logger = logging.getLogger("model_base")
@@ -36,7 +37,9 @@ class ModelBase(ndb.Model):
 	@classmethod
 	def create(cls, data_dict):
 		"""Creates a new entity from a data object"""
-		return None
+		entity = cls(parent = cls.parent_key())
+		entity.copy_from_dict(data_dict)
+		return entity
 	
 	@classmethod	
 	def delete_all(cls):
@@ -47,9 +50,18 @@ class ModelBase(ndb.Model):
 			keys.append(venue.key)			
 		logger.info("deleting %s", keys)
 		ndb.delete_multi(keys)
+		
+	def copy_from_dict(self, data_dict):
+		"""Copies the data from a dictionary into the entity. This can result in a ValidationError,
+			if the data is not successfully converted"""
+		pass
+		
+	def to_json(self):
+		"""Converts the entity to JSON"""
+		return json.dumps(self, default = lambda o: o.to_dict())
 	
 	def validate(self):
-		"""Validates a data object"""
+		"""Validates a data object and results in a ValidationError is the data is invalid"""
 		pass
 			
 
