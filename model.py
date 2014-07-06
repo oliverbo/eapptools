@@ -51,6 +51,10 @@ class ModelBase(ndb.Model):
 		logger.info("deleting %s", keys)
 		ndb.delete_multi(keys)
 		
+	def delete(self):
+		"""Deletes itself from storage"""
+		self.key.delete()
+		
 	def copy_from_dict(self, data_dict):
 		"""Copies the data from a dictionary into the entity. This can result in a ValidationError,
 			if the data is not successfully converted"""
