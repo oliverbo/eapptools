@@ -45,11 +45,28 @@ class ModelBase(ndb.Model):
 	def delete_all(cls):
 		"""Deletes all entities"""
 		keys = []
-		enities = cls.findAll()
+		entities = cls.find_all()
 		for entity in entities:
-			keys.append(venue.key)			
+			keys.append(entity.key)			
 		logger.info("deleting %s", keys)
 		ndb.delete_multi(keys)
+		
+	@classmethod
+	def export_as_json(cls):
+		"""Exports all entities as JSON"""
+		entities = cls.find_all()
+		return to_json(entities)
+		
+	@classmethod
+	def import_from_json(cls, json_data):
+		"""imports records from a list of json-formatted objects. All objects are validated"""
+		# convert data to venues
+		data_list = json.loads(json_data)
+		for data_dict in data_list:
+			logger.debug("JSON object: %s", data_dict)
+			venue = cls.create(data_dict)
+			venue.validate()
+			venue.put()
 		
 	def delete(self):
 		"""Deletes itself from storage"""
@@ -67,6 +84,8 @@ class ModelBase(ndb.Model):
 	def validate(self):
 		"""Validates a data object and results in a ValidationError is the data is invalid"""
 		pass
+
+# General utility methods
 			
 def to_json(obj):  
 	"""Generic JSON converter that handles also arrays of NDB entities"""  
