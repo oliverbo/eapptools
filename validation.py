@@ -56,10 +56,13 @@ class ErrorResponse:
 	def to_json(self):
 		return json.dumps(obj, default = lambda o: o.__dict__)
 
+# Internal utilities
 				
 def _append_to_result(result, item):
 	if result:
 		result.append(item)
+		
+# Methods to extract, validate and convert data
 						
 def get_string(data_dict, name, result, mandatory = False):
 	"""Returns a string safely from the dictionary"""
@@ -81,7 +84,7 @@ def get_int(data_dict, name, result, mandatory = False):
 		value = data_dict[name]
 		if value:
 			try:
-				venue.priceLevel = int(data_dict['priceLevel'])
+				int_value = int(data_dict['priceLevel'])
 			except:
 				_append_to_result(result, ValidationResult(ERR_INVALID_NUMBER, name))
 	return int_value
