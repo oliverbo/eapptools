@@ -30,7 +30,7 @@ class ResourceHandler(webapp2.RequestHandler):
 		resource_path = ''
 		key = None
 		resource_descriptor = None
-		mapping = self.app.config.get("mapping")
+		mapping = self.app.config.get(eapptools.CFG_RESOURCE_MAPPING)
 		logger.debug('found mapping %s', mapping)
 		for p in path_elements:
 			logger.debug("Element %s", p)		
