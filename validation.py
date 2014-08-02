@@ -73,7 +73,7 @@ def get_string(data_dict, name, result, mandatory = False):
 		string_value = None
 		
 	if (mandatory and not string_value):
-		_append_to_result(result, ValidationResult(ERR_DATA_MISSING, "uniqueName"))
+		_append_to_result(result, ValidationResult(ERR_DATA_MISSING, name))
 		
 	return string_value
 			
