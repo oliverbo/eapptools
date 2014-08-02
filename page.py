@@ -36,10 +36,13 @@ class PageHandler(webapp2.RequestHandler):
 		else:
 			page = self.request.path
 			
+		logger.debug("Page Name: %s", page)
+			
 		mapping = self.app.config.get(eapptools.CFG_PAGE_MAPPING)
 		
 		if page in mapping:
 			page_descriptor = mapping[page]
+			logger.debug("page descriptor: %s", page_descriptor.file)
 			
 			user = users.get_current_user()		
 			
@@ -60,7 +63,7 @@ class PageHandler(webapp2.RequestHandler):
 				file = page
 				
 			global_html_dir = self.app.config.get(eapptools.CFG_GLOBAL_APP_DIR) + '/' + self.app.config.get(eapptools.CFG_HTML_DIR)
-				
+			logger.debug("Loading template %s from %s", file, global_html_dir)
 			template = _JINJA_ENVIRONMENT.get_template(global_html_dir + '/' + file)
 			
 			# compose page info

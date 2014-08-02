@@ -84,7 +84,7 @@ def get_int(data_dict, name, result, mandatory = False):
 		value = data_dict[name]
 		if value:
 			try:
-				int_value = int(data_dict['priceLevel'])
+				int_value = int(data_dict[name])
 			except:
 				_append_to_result(result, ValidationResult(ERR_INVALID_NUMBER, name))
 	return int_value
