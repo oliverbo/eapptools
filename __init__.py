@@ -1,8 +1,16 @@
 # basic environment setting for web tools
 
+import os
 import logging
 
 logger = logging.getLogger("eapptools")
+
+if os.environ['SERVER_SOFTWARE'].startswith('Dev'):
+	RUNMODE = "DEV"
+else:
+	RUNMODE = "PROD"
+	
+logger.info("RUNMODE=%s", RUNMODE)
 
 # config paramater names
 CFG_GLOBAL_APP_DIR = 'global_app_dir'
