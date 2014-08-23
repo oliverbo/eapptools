@@ -4,6 +4,7 @@ import logging
 import json
 
 import eapptools
+from eapptools import user_manager
 import webapp2
 from google.appengine.api import users
 import jinja2
@@ -44,7 +45,7 @@ class PageHandler(webapp2.RequestHandler):
 			page_descriptor = mapping[page]
 			logger.debug("page descriptor: %s", page_descriptor.file)
 			
-			user = users.get_current_user()		
+			user = user_manager.current_user()
 			
 			# Checking authorization
 			if page_descriptor.access == eapptools.ACCESS_NONE:
@@ -72,7 +73,7 @@ class PageHandler(webapp2.RequestHandler):
 				'loginURI' : users.create_login_url('/')
 			}
 			if user:
-				page_info["userName"] = user.nickname()
+				page_info["userName"] = user.google_user.nickname()
         	
 			if users.is_current_user_admin():
 				page_info["isAdmin"] = True;

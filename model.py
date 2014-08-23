@@ -1,5 +1,4 @@
 import logging
-import musicdb
 import json
 from google.appengine.ext import ndb
 
@@ -24,11 +23,11 @@ class ModelBase(ndb.Model):
 		return query.fetch(MAXDATA)
 	
 	@classmethod
-	def find(cls, key):
-		"""Returns a single enitity identified with the key or None if it cannot be found"""
-		query = cls.query(cls.uniqueName == key)
+	def find(cls, uniqueName):
+		"""Returns a single entity identified with the key or None if it cannot be found"""
+		query = cls.query(cls.uniqueName == uniqueName)
 		entities = query.fetch(1)
-		logger.info('Found entity for key %s: %s', key, entities)
+		logger.info('Found entity for key %s: %s', uniqueName, entities)
 		if (len(entities) == 0):
 			return None
 		else:
