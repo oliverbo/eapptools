@@ -15,7 +15,6 @@ class User(model.ModelBase):
 	google_user = None
 	
 	# The Google user id
-	uniqueName = ndb.StringProperty()
 	firstName = ndb.StringProperty()
 	lastName = ndb.StringProperty()
 	createdDate = ndb.DateTimeProperty(auto_now_add = True)

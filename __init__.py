@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger("eapptools")
 
-if os.environ['SERVER_SOFTWARE'].startswith('Dev'):
+if not 'SERVER_SOFTWARE' in os.environ or os.environ['SERVER_SOFTWARE'].startswith('Dev'):
 	RUNMODE = "DEV"
 else:
 	RUNMODE = "PROD"
