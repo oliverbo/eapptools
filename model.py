@@ -1,5 +1,6 @@
 import logging
 import json
+import datetime
 from google.appengine.ext import ndb
 
 logger = logging.getLogger("model_base")
@@ -87,7 +88,15 @@ class ModelBase(ndb.Model):
 # General utility methods
 			
 def to_json(obj):  
-	"""Generic JSON converter that handles also arrays of NDB entities"""  
-	return json.dumps(obj, default = lambda o: o.to_dict())
-
+	"""Generic JSON converter that handles also arrays of NDB entities""" 
+	
+	return json.dumps(obj, default=_ndb_json_encoder)
+	
+def _ndb_json_encoder(obj):
+	if isinstance(obj, ndb.Model):
+		return obj.to_dict()
+	elif isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, date.time):
+		return obj.isoformat()
+	else:
+		return obj.__dict__
 	
