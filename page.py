@@ -5,6 +5,7 @@ import json
 
 import eapptools
 from eapptools import user_manager
+from eapptools import js
 import webapp2
 from google.appengine.api import users
 import jinja2
@@ -78,7 +79,10 @@ class PageHandler(webapp2.RequestHandler):
 			if users.is_current_user_admin():
 				page_info["isAdmin"] = True;
 				
-			template_values = {'pageInfo' : _create_page_module(page_info)}
+			template_values = {
+				'pageInfo' : _create_page_module(page_info),
+				'jsReference' : js.create_java_script_references(self.app.config)
+			}
 			self.response.write(template.render(template_values))
 		else:
 			self.response.status = '404 not found'
@@ -93,4 +97,6 @@ def _create_page_module(values):
 	logger.info(code)
 	
 	return code
+
+
 	
