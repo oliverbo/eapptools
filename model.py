@@ -95,7 +95,7 @@ def to_json(obj):
 def _ndb_json_encoder(obj):
 	if isinstance(obj, ndb.Model):
 		return obj.to_dict()
-	elif isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, date.time):
+	elif isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, datetime.time):
 		return obj.isoformat()
 	else:
 		return obj.__dict__
