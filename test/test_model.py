@@ -24,7 +24,7 @@ class TestModel(model.ModelBase):
 	
 	def copy_from_dict(self, data_dict):
 		result = []
-		self.uniqueName = val.get_string(data_dict, "uniqueName", result)
+		self.id = val.get_string(data_dict, "id", result)
 		self.name = val.get_string(data_dict, "name", result)
 	
 	
@@ -42,13 +42,13 @@ class ModelTestCase(unittest.TestCase):
 		self.testbed.deactivate()	
 		
 	def testCreateEntity(self):
-		test_model = TestModel.create({"uniqueName" : "1", "name" : "Test"})
-		self.assertEqual("1", test_model.uniqueName)
+		test_model = TestModel.create({"id" : "1", "name" : "Test"})
+		self.assertEqual("1", test_model.id)
 		self.assertEqual("Test", test_model.name)
 		test_key = test_model.put()
 		
 	def testJsonConverter(self):
-		test_model = TestModel.create({"uniqueName" : "1"})
+		test_model = TestModel.create({"id" : "1"})
 		test_model.name = "Test"
 		test_model.int = 5
 		test_model.date = datetime.date(1964, 10, 8)

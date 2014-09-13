@@ -6,6 +6,8 @@ from google.appengine.api import users
 from eapptools import model
 from eapptools import validation as val
 
+USER_ID_PREFIX_GOOGLE = 'G'
+
 logger = logging.getLogger("user_manager")
 
 class User(model.ModelBase):
@@ -15,8 +17,10 @@ class User(model.ModelBase):
 	google_user = None
 	
 	# The Google user id
+	userName = ndb.StringProperty(required=True)
 	firstName = ndb.StringProperty()
 	lastName = ndb.StringProperty()
+	primaryEmail = ndb.StringProperty()
 	createdDate = ndb.DateTimeProperty(auto_now_add = True)
 	updatedDate = ndb.DateTimeProperty(auto_now = True)
 	
@@ -30,12 +34,14 @@ class User(model.ModelBase):
 		
 		result = []
 		if (data_dict):
-			self.uniqueName = val.get_string(data_dict, 'uniqueName', result, mandatory = True)
+			self.userName = val.get_string(data_dict, 'userName', result, mandatory = True)
+			self.id = val.get_string(data_dict, 'id', result, mandatory = True)
 			self.firstName = val.get_string(data_dict, 'firstName', result)
 			self.lastName = val.get_string(data_dict, 'lastName', result)
+			self.primaryEmail = val.get_string(data_dict, 'primaryEmail', result)
 			
 		if len(result) > 0:
-			raise va.ValidationError(result)
+			raise va.ValidationError(result)	
 			
 def current_user(create_user = True):
 	"""Gets the current user record from the database"""
@@ -44,12 +50,20 @@ def current_user(create_user = True):
 	if not google_user:
 		return None
 	
-	user = User.find(google_user.user_id())
+	user = User.find(USER_ID_PREFIX_GOOGLE + google_user.user_id())
+	
+	if user:
+		logger.debug("User %s with key %s found", user.id, user.key)
+	else:
+		logger.debug("No user found")
 	
 	# auto-create user record
 	if not user and create_user:
 		logger.info("Create new user for %s", google_user.user_id())
-		user = User.create({"uniqueName" : google_user.user_id()})
+		user = User.create({
+			"id" : USER_ID_PREFIX_GOOGLE + google_user.user_id(),
+			"userName" : google_user.nickname()
+		})
 		user.put()
 		
 	user.google_user = google_user

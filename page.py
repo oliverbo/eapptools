@@ -74,7 +74,10 @@ class PageHandler(webapp2.RequestHandler):
 				'loginURI' : users.create_login_url('/')
 			}
 			if user:
-				page_info["userName"] = user.google_user.nickname()
+				page_info["userName"] = user.userName
+				page_info["userId"] = user.id
+				page_info["firstName"] = user.firstName
+				page_info["lastName"] = user.lastName
         	
 			if users.is_current_user_admin():
 				page_info["isAdmin"] = True;

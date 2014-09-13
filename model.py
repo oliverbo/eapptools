@@ -10,7 +10,7 @@ MAXDATA = 50
 class ModelBase(ndb.Model):
 	"""Base class for NDB entity classes"""
 	model_name = "BASE"
-	uniqueName = ndb.StringProperty()
+	id = ndb.StringProperty(indexed = True)
 	
 	@classmethod
 	def parent_key(cls):
@@ -24,11 +24,11 @@ class ModelBase(ndb.Model):
 		return query.fetch(MAXDATA)
 	
 	@classmethod
-	def find(cls, uniqueName):
+	def find(cls, id):
 		"""Returns a single entity identified with the key or None if it cannot be found"""
-		query = cls.query(cls.uniqueName == uniqueName)
+		query = cls.query(cls.id == id)
 		entities = query.fetch(1)
-		logger.info('Found entity for key %s: %s', uniqueName, entities)
+		logger.info('Found entity for key %s: %s', id, entities)
 		if (len(entities) == 0):
 			return None
 		else:
