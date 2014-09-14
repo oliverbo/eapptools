@@ -26,8 +26,8 @@ class User(model.ModelBase):
 	
 	
 	@classmethod
-	def parent_key(cls):
-		return ndb.Key("Base", "user")
+	def parent_key(cls, data_dict = None):
+		return ndb.Key(model.BASE_MODEL, "user")
 		
 	def copy_from_dict(self, data_dict):
 		"""Copies the data from a dictionary"""
@@ -35,7 +35,6 @@ class User(model.ModelBase):
 		result = []
 		if (data_dict):
 			self.userName = val.get_string(data_dict, 'userName', result, mandatory = True)
-			self.id = val.get_string(data_dict, 'id', result, mandatory = True)
 			self.firstName = val.get_string(data_dict, 'firstName', result)
 			self.lastName = val.get_string(data_dict, 'lastName', result)
 			self.primaryEmail = val.get_string(data_dict, 'primaryEmail', result)
@@ -50,16 +49,17 @@ def current_user(create_user = True):
 	if not google_user:
 		return None
 	
-	user = User.find(USER_ID_PREFIX_GOOGLE + google_user.user_id())
+	user_key = User.get_key({'id' : USER_ID_PREFIX_GOOGLE + google_user.user_id()})
+	user = user_key.get()
 	
 	if user:
-		logger.debug("User %s with key %s found", user.id, user.key)
+		logger.debug("User %s found", user.key)
 	else:
 		logger.debug("No user found")
 	
 	# auto-create user record
 	if not user and create_user:
-		logger.info("Create new user for %s", google_user.user_id())
+		logger.info("Create new user for Google user ID %s", google_user.user_id())
 		user = User.create({
 			"id" : USER_ID_PREFIX_GOOGLE + google_user.user_id(),
 			"userName" : google_user.nickname()

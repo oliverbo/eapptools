@@ -5,39 +5,54 @@ from google.appengine.ext import ndb
 
 logger = logging.getLogger("model_base")
 
+BASE_MODEL = 'BASE'
 MAXDATA = 50
+
+ID_FIELD_NAME = 'id'
+KEY_FIELD_NAME = 'key'
 
 class ModelBase(ndb.Model):
 	"""Base class for NDB entity classes"""
-	model_name = "BASE"
-	id = ndb.StringProperty(indexed = True)
 	
 	@classmethod
-	def parent_key(cls):
+	def parent_key(cls, data_dict = None):
 		"""Returns the parent key - by default the base key"""
-		return ndb.Key('Base')
-	
+		raise RuntimeError('parent_key is not defined in sub_class')
+		
 	@classmethod
-	def find_all(cls):
+	def get_key(cls, data_dict):
+		"""Returns the key from either an id or a URL-safe key"""
+		if KEY_FIELD_NAME in data_dict:
+			return ndb.Key(urlsafe = data_dict[KEY_FIELD_NAME])
+		elif ID_FIELD_NAME in data_dict:
+			return ndb.Key(parent = cls.parent_key(data_dict), flat=(cls, data_dict[ID_FIELD_NAME]))
+		else:
+			return None		
+			
+	@classmethod
+	def find_all(cls, data_dict = None):
 		"""Queries all entities"""
-		query = cls.query(ancestor=cls.parent_key())
+		query = cls.query(ancestor=cls.parent_key(data_dict))
 		return query.fetch(MAXDATA)
 	
 	@classmethod
-	def find(cls, id):
-		"""Returns a single entity identified with the key or None if it cannot be found"""
-		query = cls.query(cls.id == id)
-		entities = query.fetch(1)
-		logger.info('Found entity for key %s: %s', id, entities)
-		if (len(entities) == 0):
-			return None
-		else:
-			return entities[0]
+	def find(cls, data_dict):
+		"""Returns a single entity by either id with parent information or the full key"""
+		key = cls.get_key(data_dict).get()
+		
+		if not key:
+			raise RuntimeError('no id or key element in data')
+		return key.get() 
 			
 	@classmethod
 	def create(cls, data_dict):
-		"""Creates a new entity from a data object"""
-		entity = cls(parent = cls.parent_key())
+		"""Creates a new entity from a data object. If the dict has a field 'id' it is used as the id in the entities key"""		
+		if 'id' in data_dict:
+			new_key = ndb.Key(parent = cls.parent_key(data_dict), flat = (cls, data_dict[ID_FIELD_NAME]))
+			entity = cls(key=new_key)
+		else:
+			entity = cls(parent = cls.parent_key(data_dict))
+			
 		entity.copy_from_dict(data_dict)
 		return entity
 	

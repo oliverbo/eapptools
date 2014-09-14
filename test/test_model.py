@@ -18,15 +18,28 @@ class TestModel(model.ModelBase):
 	time = ndb.TimeProperty()
 	
 	@classmethod
-	def parent_key(cls):
+	def parent_key(cls, data_dict = None):
 		"""Returns the parent key - by default the base key"""
-		return ndb.Key("Base", "user")
+		return ndb.Key(model.BASE_MODEL, "test")
+		
+	@classmethod
+	def kind(cls):
+		return "test"
 	
 	def copy_from_dict(self, data_dict):
 		result = []
 		self.id = val.get_string(data_dict, "id", result)
 		self.name = val.get_string(data_dict, "name", result)
+		
+class SubModel(model.ModelBase):
+	text = ndb.StringProperty()
 	
+	@classmethod
+	def parent_key(cls, data_dict):
+		if 'parent_id' in data_dict:
+			return ndb.Key(parent = TestModel.parent_key(), flat=(TestModel, data_dict['parent_id']))
+		else:
+			raise RuntimeError('no parent_id in data')
 	
 class ModelTestCase(unittest.TestCase):
 	def setUp(self):
@@ -42,10 +55,22 @@ class ModelTestCase(unittest.TestCase):
 		self.testbed.deactivate()	
 		
 	def testCreateEntity(self):
-		test_model = TestModel.create({"id" : "1", "name" : "Test"})
-		self.assertEqual("1", test_model.id)
+		# Create and store entity
+		test_model = TestModel.create({"id" : "999", "name" : "Test"})
+		self.assertEqual("999", test_model.id)
 		self.assertEqual("Test", test_model.name)
 		test_key = test_model.put()
+		
+		# retrieve entity via key
+		key = ndb.Key(parent = TestModel.parent_key(), flat=(TestModel, "999"))
+		test_model = key.get()
+		self.assertEqual("999", test_model.id)
+		self.assertEqual("Test", test_model.name)
+		
+	def testSubModel(self):
+		test_model = TestModel.create({"id" : "111", "name" : "Test"})
+		test_key = test_model.put()
+		sub_model = SubModel.create({'text' : 'ABC', 'parent_id' : '111'})
 		
 	def testJsonConverter(self):
 		test_model = TestModel.create({"id" : "1"})

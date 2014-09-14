@@ -75,7 +75,7 @@ class PageHandler(webapp2.RequestHandler):
 			}
 			if user:
 				page_info["userName"] = user.userName
-				page_info["userId"] = user.id
+				page_info["userId"] = user.key.id()
 				page_info["firstName"] = user.firstName
 				page_info["lastName"] = user.lastName
         	

@@ -3,6 +3,7 @@ import json
 import logging
 import eapptools
 import eapptools.validation as val
+from eapptools import model
 from google.appengine.api import users
 
 logger = logging.getLogger("resource")
@@ -12,52 +13,28 @@ class ResourceDescriptor:
 	get_permission = eapptools.ACCESS_NONE
 	post_permission = eapptools.ACCESS_NONE
 	delete_permission = eapptools.ACCESS_NONE
+	path_elements = ('id',)
+	auto_create = False
 	
-	def __init__(self, entity_class, get_permission = eapptools.ACCESS_NONE, 
-		post_permission = eapptools.ACCESS_NONE, delete_permission = eapptools.ACCESS_NONE):
+	def __init__(self, entity_class, 
+		get_permission = eapptools.ACCESS_NONE, 
+		post_permission = eapptools.ACCESS_NONE, 
+		delete_permission = eapptools.ACCESS_NONE,
+		path_elements = ('id',)):
+		
 		self.entity_class = entity_class
 		self.get_permission = get_permission
 		self.post_permission = post_permission
-		self.delete_permission = delete_permission	
+		self.delete_permission = delete_permission
+		self.path_elements = path_elements
 
 class ResourceHandler(webapp2.RequestHandler):
 	"""Web request handler for restful resources"""
-	
-	def _get_resource_descriptor(self, path):
-		path_elements = self.request.path.split('/')
-		
-		# Looping through the elements to find a matching handler
-		resource_path = ''
-		key = None
-		resource_descriptor = None
-		mapping = self.app.config.get(eapptools.CFG_RESOURCE_MAPPING)
-		logger.debug('found mapping %s', mapping)
-		for p in path_elements:
-			logger.debug("Element %s", p)		
-			if not resource_descriptor:
-				resource_path += p
-				logger.debug('looking for resource descriptor for %s', resource_path)
-				if resource_path in mapping:
-					logger.debug("resource descriptor found for %s", resource_path)
-					resource_descriptor = mapping[resource_path]
-					key = ''
-				else:
-					resource_path += '/'
-			elif key == '':
-				key += p
-				logger.debug('key %s', key)
-			else:
-				key += '/' + p
-		
-		if resource_descriptor:
-			logger.info("Resource descriptor found for %s and key '%s'", resource_path, key)
-			return (resource_descriptor, key)
-		else:
-			return (None, None)
 
 	def get(self):
 		logger.info('API request %s', self.request.path)
-		(resource_descriptor, key) = self._get_resource_descriptor(self.request.path)
+		(resource_descriptor, param) = _get_resource_descriptor(self.request.path, 
+			self.app.config.get(eapptools.CFG_RESOURCE_MAPPING))
 		
 		if not resource_descriptor:
 			self.response.status = '400 Bad Request'
@@ -68,11 +45,11 @@ class ResourceHandler(webapp2.RequestHandler):
 			else:
 				entity_class = resource_descriptor.entity_class
 			
-				if not key:
+				if len(param) == 0:
 					result = entity_class.find_all()
 					logger.debug('Result: %s', result)
 				else:
-					result = entity_class.find(key)
+					result = entity_class.find(param)
 				if not result:
 					self.response.status = '404 Not Found'
 				else:
@@ -83,7 +60,8 @@ class ResourceHandler(webapp2.RequestHandler):
 	
 	def post(self):
 		logger.info("received post request: %s ", self.request.body)
-		(resource_descriptor, key) = self._get_resource_descriptor(self.request.path)
+		(resource_descriptor, param) = _get_resource_descriptor(self.request.path, 
+			self.app.config.get(eapptools.CFG_RESOURCE_MAPPING))
 		if not resource_descriptor:
 			self.response.status = '400 Bad Request'
 		else:
@@ -95,16 +73,22 @@ class ResourceHandler(webapp2.RequestHandler):
 			else:
 				entity_class = resource_descriptor.entity_class
 				data = json.loads(self.request.body)
+				# adding URL parameters to data
+				data.update(param)
 				logger.debug("Data: %s", data)
 				try:
+					key = entity_class.get_key(data)
+					entity = None
 					if key:
-						entity = entity_class.find(key)
-						if entity:
-							entity.copy_from_dict(data)
-							logger.debug("Updating %s", entity)
-						else:
-							entity = entity_class.create(data)
-							logger.debug("Inserting %s", entity)
+						entity = key.get()
+						entity.copy_from_dict(data)
+						logger.debug("Updating %s", entity)
+					elif resource_descriptor.auto_create:
+						entity = entity_class.create(data)
+						logger.debug("Inserting %s", entity)
+					else:
+						self.response.status = '400 Bad Request'
+					if entity:
 						entity.validate()
 						entity.put()
 				except val.ValidationError as e:
@@ -116,7 +100,8 @@ class ResourceHandler(webapp2.RequestHandler):
 			
 	def delete(self):
 		logger.info("received delete request: %s ", self.request.body)
-		(resource_descriptor, key) = self._get_resource_descriptor(self.request.path)
+		(resource_descriptor, param) = _get_resource_descriptor(self.request.path, 
+			self.app.config.get(eapptools.CFG_RESOURCE_MAPPING))
 		if not resource_descriptor or not key:
 			self.response.status = '400 Bad Request'
 		else:
@@ -126,7 +111,7 @@ class ResourceHandler(webapp2.RequestHandler):
 			else:
 				entity_class = resource_descriptor.entity_class
 				try:
-					entity = entity_class.find(key)
+					entity = entity_class.find(param)
 					if entity:						
 						entity.delete()
 					else:
@@ -137,3 +122,35 @@ class ResourceHandler(webapp2.RequestHandler):
 					response_message = ErrorResponse(val.ERR_DELETE, e.result).to_json()
 					logger.debug("Error message: %s", response_message)
 					self.response.write(response_message)
+					
+def _get_resource_descriptor(path, mapping):
+	"""Finds the resource descriptor by splitting the path"""
+	path_elements = path.split('/')
+	param_index = 0
+	param = {}
+		
+	# Looping through the elements to find a matching handler
+	resource_path = ''
+	resource_descriptor = None
+	logger.debug('found mapping %s', mapping)
+	for p in path_elements:
+		logger.debug("Element %s", p)		
+		if not resource_descriptor:
+			resource_path += p
+			logger.debug('looking for resource descriptor for %s', resource_path)
+			if resource_path in mapping:
+				logger.debug("resource descriptor found for %s", resource_path)
+				resource_descriptor = mapping[resource_path]
+			else:
+				resource_path += '/'
+		else:
+			logger.debug('param %s on position %d', p, param_index)
+			if len(resource_descriptor.path_elements) > param_index:
+				param[resource_descriptor.path_elements[param_index]] = p
+				param_index = param_index + 1
+	
+	if resource_descriptor:
+		logger.info("Resource descriptor found for %s and parameter %s", resource_path, param)
+		return (resource_descriptor, param)
+	else:
+		return (None, None)
