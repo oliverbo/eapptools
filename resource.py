@@ -91,7 +91,12 @@ class ResourceHandler(webapp2.RequestHandler):
 						self.response.status = '400 Bad Request'
 					if entity:
 						entity.validate()
-						entity.put()
+						key = entity.put()
+						self.response.content_type = "application/json"
+						if entity.id_field_name() == model.ID_FIELD_NAME:
+							self.response.write('{"id" : "%s"}' % key.id())
+						else:
+							self.response.write('{"key" : "%s"}' % key.urlsafe())
 				except val.ValidationError as e:
 					self.response.status = '400 Bad Request'
 					self.response.content_type = "application/json"
