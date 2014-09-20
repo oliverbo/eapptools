@@ -78,6 +78,7 @@ class ResourceHandler(webapp2.RequestHandler):
 				logger.debug("Data: %s", data)
 				try:
 					key = entity_class.get_key(data)
+					logger.debug("Key found: %s", key)
 					entity = None
 					if key:
 						entity = key.get()

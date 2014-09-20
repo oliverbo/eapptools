@@ -18,7 +18,7 @@ class ModelBase(ndb.Model):
 	def parent_key(cls, data_dict = None):
 		"""Returns the parent key - by default the base key"""
 		raise RuntimeError('parent_key is not defined in sub_class')
-		
+				
 	@classmethod
 	def get_key(cls, data_dict):
 		"""Returns the key from either an id or a URL-safe key"""
@@ -38,11 +38,11 @@ class ModelBase(ndb.Model):
 	@classmethod
 	def find(cls, data_dict):
 		"""Returns a single entity by either id with parent information or the full key"""
-		key = cls.get_key(data_dict).get()
+		key = cls.get_key(data_dict)
 		
 		if not key:
 			raise RuntimeError('no id or key element in data')
-		return key.get() 
+		return key.get()
 			
 	@classmethod
 	def create(cls, data_dict):
@@ -82,6 +82,11 @@ class ModelBase(ndb.Model):
 			venue = cls.create(data_dict)
 			venue.validate()
 			venue.put()
+	
+	@staticmethod		
+	def id_field_name():
+		"""Determines if an entity is identified by ID and parent or the full key"""
+		return ID_FIELD_NAME
 		
 	def delete(self):
 		"""Deletes itself from storage"""
@@ -104,12 +109,18 @@ class ModelBase(ndb.Model):
 			
 def to_json(obj):  
 	"""Generic JSON converter that handles also arrays of NDB entities""" 
-	
 	return json.dumps(obj, default=_ndb_json_encoder)
 	
 def _ndb_json_encoder(obj):
-	if isinstance(obj, ndb.Model):
-		return obj.to_dict()
+	if isinstance(obj, ModelBase):
+		dict = obj.to_dict()
+		if obj.id_field_name() == KEY_FIELD_NAME:
+			dict[KEY_FIELD_NAME] = obj.key.urlsafe()
+		elif obj.id_field_name() == ID_FIELD_NAME:
+			dict[ID_FIELD_NAME] = obj.key.id()
+		else:
+			raise RuntimeError('Invalid id field name %s' % obj.id_field_name())
+		return dict
 	elif isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, datetime.time):
 		return obj.isoformat()
 	else:
