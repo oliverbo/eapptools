@@ -1,15 +1,18 @@
 # Utilities for validation and error handling
 
 import json
+from eapptools import user_manager
 
 ERR_INVALID_NUMBER = 1000
 ERR_DATA_MISSING = 1001
 ERR_DUPLICATE_KEY = 1002
+ERR_INVALID_USER_ID = 1100
 
 VALIDATION_ERRORS = {
 	ERR_INVALID_NUMBER : "Invalid Number",
 	ERR_DATA_MISSING : "Mandatory field missing",
-	ERR_DUPLICATE_KEY : "Duplicate Key"
+	ERR_DUPLICATE_KEY : "Duplicate Key",
+	ERR_INVALID_USER_ID : "Invalid User ID"
 }
 
 class ValidationError(Exception):
@@ -88,3 +91,17 @@ def get_int(data_dict, name, result, mandatory = False):
 			except:
 				_append_to_result(result, ValidationResult(ERR_INVALID_NUMBER, name))
 	return int_value
+	
+def get_user_key(data_dict, name, result, mandatory = False):
+	"""Retrieves the ndb key for an object identified by its id in the name field"""
+	user_key = None
+	if name in data_dict:
+		user_key = user_manager.User.get_key({'id' : data_dict[name]})
+		if not user_key or not user_key.get():
+			user_key = None
+			
+	if mandatory and not user_key:
+		_append_to_result(result, ValidationResult(ERR_INVALID_USER_ID, name))
+		
+	return user_key
+			

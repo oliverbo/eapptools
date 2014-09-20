@@ -4,7 +4,7 @@ import logging
 from google.appengine.ext import ndb
 from google.appengine.api import users
 from eapptools import model
-from eapptools import validation as val
+import eapptools.validation
 
 USER_ID_PREFIX_GOOGLE = 'G'
 
@@ -23,24 +23,19 @@ class User(model.ModelBase):
 	primaryEmail = ndb.StringProperty()
 	createdDate = ndb.DateTimeProperty(auto_now_add = True)
 	updatedDate = ndb.DateTimeProperty(auto_now = True)
-	
-	
-	@classmethod
-	def parent_key(cls, data_dict = None):
-		return ndb.Key(model.BASE_MODEL, "user")
 		
 	def copy_from_dict(self, data_dict):
 		"""Copies the data from a dictionary"""
 		
 		result = []
 		if (data_dict):
-			self.userName = val.get_string(data_dict, 'userName', result, mandatory = True)
-			self.firstName = val.get_string(data_dict, 'firstName', result)
-			self.lastName = val.get_string(data_dict, 'lastName', result)
-			self.primaryEmail = val.get_string(data_dict, 'primaryEmail', result)
+			self.userName = eapptools.validation.get_string(data_dict, 'userName', result, mandatory = True)
+			self.firstName = eapptools.validation.get_string(data_dict, 'firstName', result)
+			self.lastName = eapptools.validation.get_string(data_dict, 'lastName', result)
+			self.primaryEmail = eapptools.validation.get_string(data_dict, 'primaryEmail', result)
 			
 		if len(result) > 0:
-			raise va.ValidationError(result)	
+			raise eapptools.validation.ValidationError(result)	
 			
 def current_user(create_user = True):
 	"""Gets the current user record from the database"""

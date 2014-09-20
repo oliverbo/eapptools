@@ -17,7 +17,8 @@ class ModelBase(ndb.Model):
 	@classmethod
 	def parent_key(cls, data_dict = None):
 		"""Returns the parent key - by default the base key"""
-		raise RuntimeError('parent_key is not defined in sub_class')
+		return ndb.Key(BASE_MODEL, cls.__name__)
+		#raise RuntimeError('parent_key is not defined in sub_class')
 				
 	@classmethod
 	def get_key(cls, data_dict):
