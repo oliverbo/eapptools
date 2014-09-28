@@ -20,13 +20,15 @@ class ResourceDescriptor:
 		get_permission = eapptools.ACCESS_NONE, 
 		post_permission = eapptools.ACCESS_NONE, 
 		delete_permission = eapptools.ACCESS_NONE,
-		path_elements = ('id',)):
+		path_elements = ('id',),
+		auto_create = False):
 		
 		self.entity_class = entity_class
 		self.get_permission = get_permission
 		self.post_permission = post_permission
 		self.delete_permission = delete_permission
 		self.path_elements = path_elements
+		self.auto_create = auto_create
 
 class ResourceHandler(webapp2.RequestHandler):
 	"""Web request handler for restful resources"""
@@ -79,9 +81,9 @@ class ResourceHandler(webapp2.RequestHandler):
 				try:
 					key = entity_class.get_key(data)
 					logger.debug("Key found: %s", key)
-					entity = None
-					if key:
-						entity = key.get()
+					entity = key.get()
+					logger.debug("Entity found: %s", entity)
+					if entity:
 						entity.copy_from_dict(data)
 						logger.debug("Updating %s", entity)
 					elif resource_descriptor.auto_create:
