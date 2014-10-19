@@ -102,7 +102,7 @@ class ResourceHandler(webapp2.RequestHandler):
 				except val.ValidationError as e:
 					self.response.status = '400 Bad Request'
 					self.response.content_type = "application/json"
-					response_message = ErrorResponse(val.ERR_VALIDATION, e.result).to_json()
+					response_message = val.ErrorResponse(val.ERR_VALIDATION, e.result).to_json()
 					logger.debug("Error message: %s", response_message)
 					self.response.write(response_message)
 			
@@ -110,7 +110,8 @@ class ResourceHandler(webapp2.RequestHandler):
 		logger.info("received delete request: %s ", self.request.body)
 		(resource_descriptor, param) = _get_resource_descriptor(self.request.path, 
 			self.app.config.get(eapptools.CFG_RESOURCE_MAPPING))
-		if not resource_descriptor or not key:
+		logger.info("Delete parameter: %s", param)
+		if not resource_descriptor:
 			self.response.status = '400 Bad Request'
 		else:
 			permission = resource_descriptor.delete_permission
@@ -118,16 +119,16 @@ class ResourceHandler(webapp2.RequestHandler):
 				self.response.status = '403 Not Authorized'
 			else:
 				entity_class = resource_descriptor.entity_class
+				entity = entity_class.find(param)
+				logger.debug("Found %s", entity)
+				if not entity:
+					self.response.status = '404 Not Found'
 				try:
-					entity = entity_class.find(param)
-					if entity:						
-						entity.delete()
-					else:
-						self.response.status = '404 Not Found'
+					entity.delete()						
 				except:
 					self.response.status = '400 Bad Request'
 					self.response.content_type = "application/json"
-					response_message = ErrorResponse(val.ERR_DELETE, e.result).to_json()
+					response_message = val.ErrorResponse(val.ERR_DELETE).to_json()
 					logger.debug("Error message: %s", response_message)
 					self.response.write(response_message)
 					

@@ -57,7 +57,7 @@ class ErrorResponse:
 			self.errorMessage = ERROR_CODES[error_code]
 			
 	def to_json(self):
-		return json.dumps(obj, default = lambda o: o.__dict__)
+		return json.dumps(self, default = lambda o: o.__dict__)
 
 # Internal utilities
 				
